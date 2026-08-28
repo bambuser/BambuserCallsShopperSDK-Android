@@ -16,4 +16,11 @@ data class DemoProduct(
     val description: String,
     val imageUrl: String,
     val additionalImages: List<String> = emptyList(),
+    /**
+     * Product-page URL on demo.bambuser.shop, when the product is
+     * actually live on the demo site. `null` for products that were
+     * retired from the demo catalog (agent's carousel will just skip
+     * the link).
+     */
+    val url: String? = null,
 )

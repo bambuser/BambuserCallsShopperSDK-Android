@@ -21,6 +21,11 @@ coroutinesTest = "1.8.1"
 mockk = "1.13.13"
 robolectric = "4.16.1"
 androidxTestCore = "1.6.1"
+# Version of the SDK the release pipeline pins the demo to when
+# producing the GitHub-facing staging copy. Overwritten by
+# Scripts/prepare-release.sh at release time; on develop this value
+# is a placeholder — the app module builds against `project(":...")`.
+callsShopperSdkAndroid = "0.3.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -59,9 +64,11 @@ robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "
 androidx-test-core = { group = "androidx.test", name = "core", version.ref = "androidxTestCore" }
 androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
+calls-shopper-sdk-android = { module = "com.bambuser:calls-shopper-sdk-android", version.ref = "callsShopperSdkAndroid" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+

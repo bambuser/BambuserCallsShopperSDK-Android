@@ -6,10 +6,15 @@ import com.bambuser.callsshopper.BambuserCallDelegate
 import com.bambuser.callsshopper.BambuserCallError
 import com.bambuser.callsshopper.BambuserCallEvent
 import com.bambuser.callsshopper.BambuserCallHandlers
+import com.bambuser.callsshopper.BambuserJSONValue
 import com.bambuser.callsshopper.BambuserProductRef
 import com.bambuser.callsshopper.BambuserReply
+import com.bambuser.callsshopper.CallState
 import com.bambuser.callsshopper.cartFailure
 import com.bambuser.callsshopper.cartSuccess
+import com.bambuser.callsshopper.jsonInt
+import com.bambuser.callsshopper.jsonObject
+import com.bambuser.callsshopper.jsonString
 import com.bambuser.demo.cart.CartStore
 import com.bambuser.demo.catalog.ProductCatalog
 import com.bambuser.demo.catalog.buildSearchResponseFactorySpec
@@ -42,9 +47,13 @@ class BambuserCallBridge(
             is BambuserCallEvent.NavigateTo -> handleNavigate(event.url)
             is BambuserCallEvent.Checkout   -> NavigationBridge.onSwitchToCart?.invoke()
 
+            is BambuserCallEvent.CallStateChanged -> {
+                Log.d(TAG, "event: $event")
+                if (event.state == CallState.Connected) syncCartToWidget(controller)
+            }
+
             BambuserCallEvent.Close,
             BambuserCallEvent.ChatRequested,
-            is BambuserCallEvent.CallStateChanged,
             is BambuserCallEvent.PresentationChanged,
             is BambuserCallEvent.QueueOpened,
             is BambuserCallEvent.QueueClosed,
@@ -52,6 +61,35 @@ class BambuserCallBridge(
             is BambuserCallEvent.WaitingTimeChanged,
             is BambuserCallEvent.TrackingEvent,
             is BambuserCallEvent.Other      -> Log.d(TAG, "event: $event")
+        }
+    }
+
+    /**
+     * On call connect, tell the agent's widget what's already in the
+     * shopper's local cart. The embed's `notifyCustomerEvent` takes
+     * one item per call, so we fire once per line. Each payload must
+     * carry both `sku` and `name` — the embed rejects the event
+     * otherwise (`fail('requires a non-empty "name"')`).
+     * No-op when the cart is empty.
+     *
+     * Fires only on the Connected transition — the widget's cart
+     * tool doesn't accept events before that.
+     */
+    private fun syncCartToWidget(controller: BambuserCallController) {
+        val lines = cart.orderedLines
+        if (lines.isEmpty()) return
+        Log.d(TAG, "syncCartToWidget: replaying ${lines.size} line(s)")
+        lines.forEach { (product, quantity) ->
+            controller.notifyCustomerEvent(
+                eventKey = "ADDED_TO_CART",
+                payload = jsonObject(
+                    "sku"      to jsonString(product.id),
+                    "name"     to jsonString(product.name),
+                    "price"    to BambuserJSONValue.Double(product.price),
+                    "currency" to jsonString(product.currency),
+                    "quantity" to jsonInt(quantity),
+                ),
+            )
         }
     }
 
@@ -97,11 +135,19 @@ class BambuserCallBridge(
             Log.d(TAG, "provideProductData ref='${ref.ref}' kind=${ref.kind.rawValue} bambuserId=${ref.bambuserId}")
             val sku = resolveSku(ref)
             when {
-                sku == null -> BambuserReply.Error("Unrecognised product reference: '${ref.ref}'")
+                sku == null -> {
+                    Log.w(TAG, "  → reject: could not resolve SKU from ref='${ref.ref}'")
+                    BambuserReply.Error("Unrecognised product reference: '${ref.ref}'")
+                }
                 else -> {
                     val product = ProductCatalog.product(forSku = sku)
-                    if (product == null) BambuserReply.Error("We don't sell '$sku'")
-                    else BambuserReply.Reply(product.toProductFactorySpec())
+                    if (product == null) {
+                        Log.w(TAG, "  → reject: SKU '$sku' not in ProductCatalog")
+                        BambuserReply.Error("We don't sell '$sku'")
+                    } else {
+                        Log.d(TAG, "  → reply: hydrating '${product.name}' (sku=$sku)")
+                        BambuserReply.Reply(product.toProductFactorySpec())
+                    }
                 }
             }
         },

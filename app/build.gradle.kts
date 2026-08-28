@@ -40,8 +40,11 @@ android {
 }
 
 dependencies {
-    implementation(project(":bambusercalls-shopper"))
-
+    // develop always builds against the local module. The release
+    // pipeline (prepare-release.sh) swaps this line for the remote
+    // Repsy coordinate in the staging copy that gets pushed to
+    // GitHub — the real develop file is never mutated by mira.
+    implementation(libs.calls.shopper.sdk.android)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtime.ktx)

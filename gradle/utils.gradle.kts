@@ -22,9 +22,9 @@ fun getGitBranch(): String {
 
 fun getBuildVersion(): String {
     val versionMajor = 0
-    val versionMinor = 1
+    val versionMinor = 3
     val versionPatch = 0
-    return "0.2.0"
+    return "0.1.0"
 }
 
 fun String.runCommand(

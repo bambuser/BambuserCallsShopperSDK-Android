@@ -22,8 +22,13 @@ import com.bambuser.demo.root.RootScreen
 // Bambuser settings — fill these in before running the demo.
 // ---------------------------------------------------------------------------
 
-/** Your Bambuser organization id. */
-private const val DEMO_ORG_ID: String = "rakODREyCuvCZj1wvWUa"
+/**
+ * Your Bambuser organization id. Fill in locally before running the
+ * demo — do NOT commit a real value. The release validator
+ * (Scripts/validate-release.sh) fails the pipeline if this is
+ * non-empty on the develop branch.
+ */
+private const val DEMO_ORG_ID: String = ""
 
 /**
  * Which Bambuser region this demo talks to.
@@ -35,9 +40,7 @@ private const val DEMO_ORG_ID: String = "rakODREyCuvCZj1wvWUa"
  *
  * Mirrors the iOS demo's environment resolution.
  */
-private val DEMO_ENVIRONMENT: BambuserEnvironment =
-    if (com.bambuser.demo.BuildConfig.DEBUG) BambuserEnvironment.stageUS
-    else                                     BambuserEnvironment.US
+private val DEMO_ENVIRONMENT: BambuserEnvironment = BambuserEnvironment.stageUS
 
 /** True once the org id is filled in. */
 internal val isBambuserConfigured: Boolean get() = DEMO_ORG_ID.isNotEmpty()

@@ -3,6 +3,7 @@ package com.bambuser.demo.root
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.ShoppingCart
@@ -102,7 +103,15 @@ fun RootScreen(
         }
 
         // Overlay sits above the Scaffold so PiP floats over both tabs.
-        BambuserCallOverlay(controller = bambuserCall)
+        // On Android 15+ / target SDK 35+, edge-to-edge is enforced,
+        // so the overlay must respect the display safe area itself —
+        // otherwise the widget's top-bar close button slides under
+        // the status bar / camera cutout. `safeDrawingPadding()` pulls
+        // in the status bar, nav bar, IME and cutout insets in one go.
+        BambuserCallOverlay(
+            controller = bambuserCall,
+            modifier = Modifier.safeDrawingPadding(),
+        )
     }
 }
 
