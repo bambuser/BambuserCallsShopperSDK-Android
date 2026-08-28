@@ -1,11 +1,12 @@
 package com.bambuser.callsshopper
 
 /**
- * Floating layout the embed is rendering. Drives the native PiP frame
- * size: [Minimized] for the dial-up ringing strip, [Floating] for the
- * connected mini-player.
+ * How the overlay renders when `controller.isPiP` is true.
  */
 enum class PipPresentation {
+    /** Draggable mini-player, default 180×260 dp (`configuration.floatingPipSize`). */
+    Floating,
+
+    /** Compact pill, 180×60 dp. */
     Minimized,
-    Floating
 }

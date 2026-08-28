@@ -1,28 +1,32 @@
 package com.bambuser.callsshopper.internal
 
-import android.os.Handler
-import android.os.Looper
 import android.webkit.JavascriptInterface
 
 /**
- * Native side of the `BambuserAndroidBridge.postMessage(...)` channel
- * referenced by [EmbedHTMLBuilder]'s JS. Every message the embed posts
- * comes through here on a WebView worker thread; we hop to the main
- * thread before handing it to the router.
+ * The one JS-visible object. `window.__bambuserAndroidBridge.postMessage(json)`
+ * on the JS side flows through here on a WebView background thread.
+ *
+ * The [onMessage] callback receives the raw JSON string as posted by
+ * the embed. Parsing / dispatch happens in [EmbedEventRouter] on the
+ * main thread — this class only marshals the string across the
+ * bridge boundary.
+ *
+ * ProGuard: [JavascriptInterface] methods are kept via
+ * `consumer-rules.pro`.
  */
-internal class JsBridge(private val onMessage: (String) -> Unit) {
-
-    private val main = Handler(Looper.getMainLooper())
+internal class JsBridge(
+    private val onMessage: (String) -> Unit,
+) {
 
     @JavascriptInterface
-    fun postMessage(raw: String) {
-        // WebView invokes @JavascriptInterface methods on a private background
-        // thread; bounce to the main thread so the controller's Compose state
-        // mutations are safe.
-        main.post { onMessage(raw) }
+    fun postMessage(json: String) {
+        // Called from a WebView JS-thread. Dispatch to main happens
+        // in the router; here we just forward the raw payload.
+        onMessage(json)
     }
 
     companion object {
-        const val NAME = "BambuserAndroidBridge"
+        /** Name exposed to JS: `window.__bambuserAndroidBridge`. */
+        const val NAME = "__bambuserAndroidBridge"
     }
 }

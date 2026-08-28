@@ -17,10 +17,11 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        // mavenLocal() // uncomment when consuming the SDK via `./gradlew :bambusercalls-shopper:publishToMavenLocal`
     }
 }
 
-rootProject.name = "BambuserCallShopperSDKAndroid"
+rootProject.name = "BambuserCallsShopperSDK-Android"
 
 include(":bambusercalls-shopper")
 include(":app")

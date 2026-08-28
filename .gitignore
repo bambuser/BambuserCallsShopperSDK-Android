@@ -1,13 +1,48 @@
-*.iml
-.gradle
-/local.properties
-/.idea
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
-local.properties
+# ============================================================
+# Gradle / Android — build artefacts
+# ============================================================
+.gradle/
+build/
 **/build/
-**/.gradle/
-**/.cxx/
+captures/
+.externalNativeBuild/
+.cxx/
+local.properties
+*.iml
+
+# ============================================================
+# Output artefacts
+# ============================================================
+*.apk
+*.aab
+*.ap_
+*.dex
+output.json
+
+# ============================================================
+# IDE / OS noise
+# ============================================================
+.idea/
+*.iws
+*.ipr
+.DS_Store
+*.swp
+*.swo
+Thumbs.db
+
+# ============================================================
+# Kotlin / Compose
+# ============================================================
+kotlin-js-store/
+
+# ============================================================
+# Keystore / signing (never commit these)
+# ============================================================
+*.jks
+*.keystore
+keystore.properties
+
+# ============================================================
+# Release script output (parity with iOS Scripts/)
+# ============================================================
+# build/ already covered above

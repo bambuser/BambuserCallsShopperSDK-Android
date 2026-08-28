@@ -28,9 +28,10 @@ import com.bambuser.callsshopper.internal.EmbedHTMLBuilder
 import com.bambuser.callsshopper.internal.EmbedWebView
 
 /**
- * Compose surface for a [BambuserCallController]. Renders the embed as a
- * full-screen sheet or, when `controller.isPiP` is true, as a draggable
- * floating mini-player. Drop one into a `Box` at the root of your screen.
+ * Compose surface for a [BambuserCallController]. Renders the embed
+ * as a full-screen sheet or, when [BambuserCallController.isPiP] is
+ * true, as a draggable floating mini-player. Drop one into a `Box`
+ * at the root of your screen.
  */
 @Composable
 fun BambuserCallOverlay(
@@ -41,7 +42,6 @@ fun BambuserCallOverlay(
     val orgId = controller.orgId ?: return
 
     val router = remember(controller) { EmbedEventRouter(controller) }
-
     val density = LocalDensity.current
     val cfg = controller.configuration
     val isPiP = controller.isPiP
@@ -52,42 +52,40 @@ fun BambuserCallOverlay(
 
         val pipSize = when (controller.pipPresentation) {
             PipPresentation.Minimized -> cfg.minimizedPipSize
-            PipPresentation.Floating -> cfg.floatingPipSize
+            PipPresentation.Floating  -> cfg.floatingPipSize
         }
 
-        // Animate width/height transitions cleanly; drag offset is NOT animated
-        // so the floater tracks the finger 1:1.
         val animSpec = tween<androidx.compose.ui.unit.Dp>(
             durationMillis = cfg.transitionAnimationDurationMs,
-            easing = cfg.transitionAnimationEasing
         )
         val frameWidth by animateDpAsState(
             targetValue = if (isPiP) pipSize.width else containerWidthDp,
             animationSpec = animSpec,
-            label = "frame-width"
+            label = "frame-width",
         )
         val frameHeight by animateDpAsState(
             targetValue = if (isPiP) pipSize.height else containerHeightDp,
             animationSpec = animSpec,
-            label = "frame-height"
+            label = "frame-height",
         )
 
         // Cumulative drag offset from the default (bottom-right) PiP origin.
         var dragOffsetXPx by remember { mutableStateOf(0f) }
         var dragOffsetYPx by remember { mutableStateOf(0f) }
 
-        // Reset drag when PiP toggles so each new session starts at the
-        // default origin (bottom-right).
         LaunchedEffect(isPiP) {
             dragOffsetXPx = 0f
             dragOffsetYPx = 0f
         }
 
         val (offsetXDp, offsetYDp) = with(density) {
-            if (!isPiP) 0.dp to 0.dp
-            else {
-                val baseX = containerWidthDp - pipSize.width - cfg.pipMargin
-                val baseY = containerHeightDp - pipSize.height - cfg.bottomReserve - cfg.pipMargin
+            if (!isPiP) {
+                0.dp to 0.dp
+            } else {
+                val margin = cfg.pipMarginDp.dp
+                val bottomReserve = cfg.bottomReserveDp.dp
+                val baseX = containerWidthDp - pipSize.width - margin
+                val baseY = containerHeightDp - pipSize.height - bottomReserve - margin
                 (baseX + dragOffsetXPx.toDp()) to (baseY + dragOffsetYPx.toDp())
             }
         }
@@ -116,21 +114,46 @@ fun BambuserCallOverlay(
                 .then(dragModifier)
         ) {
             EmbedWebView(
-                html = EmbedHTMLBuilder.makeHTML(
-                    orgId = orgId,
-                    embedUrl = controller.embedUrl,
-                    connectId = controller.connectId,
-                    queue = controller.queue,
-                    triggers = cfg.triggers,
-                    floatingNavigationMode = cfg.floatingNavigationMode,
-                    floatingFillMode = cfg.floatingFillMode,
-                ),
+                html = EmbedHTMLBuilder.makeHTML(makeEmbedOptions(controller, orgId)),
                 baseUrl = EmbedHTMLBuilder.baseUrl(controller.embedUrl),
                 configuration = cfg,
-                onNativeMessage = router::handle,
-                onWebViewCreated = controller::attach,
+                onNativeMessage = { raw -> router.handle(raw) },
+                onWebViewCreated = { webView -> controller.attach(webView) },
                 modifier = Modifier.fillMaxSize(),
             )
         }
     }
+}
+
+private fun makeEmbedOptions(
+    controller: BambuserCallController,
+    orgId: String,
+): EmbedHTMLBuilder.Options {
+    val cfg = controller.configuration
+    return EmbedHTMLBuilder.Options(
+        orgId = orgId,
+        embedUrl = controller.embedUrl,
+        connectId = controller.connectId,
+        queue = controller.queue ?: cfg.initialQueue,
+        triggers = cfg.triggers,
+        floatingNavigationMode = cfg.floatingNavigationMode,
+        floatingFillMode = cfg.floatingFillMode,
+        locale = cfg.locale,
+        data = cfg.initialCustomerData,
+        trackingTags = if (cfg.initialTrackingTags.isEmpty()) null
+                       else cfg.initialTrackingTags.toJsonArray(),
+        dropInEnabled = cfg.dropInEnabled,
+        bookingsEnabled = cfg.bookingsEnabled,
+        openBookingPage = cfg.openBookingPage,
+        bookingServiceIds = cfg.bookingServiceIds,
+        bookingResourceId = cfg.bookingResourceId,
+        bookingIframeUrl = cfg.bookingIframeUrl,
+        enableScanning = cfg.enableScanning,
+        merchantBaseUrl = cfg.merchantBaseUrl,
+        disableCoBrowsing = cfg.disableCoBrowsing,
+        themeId = cfg.themeId,
+        allowFirstPartyCookies = cfg.allowFirstPartyCookies,
+        disableDataLayerInterceptions = cfg.disableDataLayerInterceptions,
+        subscriptions = controller.activeSubscriptions,
+    )
 }

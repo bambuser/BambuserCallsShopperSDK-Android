@@ -1,63 +1,79 @@
 package com.bambuser.callsshopper
 
 /**
- * Single stream of events emitted by [BambuserCallController] via
- * [BambuserCallDelegate.onEvent]. Cases carrying a `callbackKey` expect the
- * host to call `controller.notify(callbackKey, info)` to resolve the
- * JS-side promise; the rest are fire-and-forget.
+ * Single event stream delivered via
+ * [BambuserCallDelegate.onEmit]. Fire-and-forget — the SDK
+ * doesn't need a reply for any of these. Data-source events (product
+ * hydration, search, cart) that DO need a reply live on
+ * [BambuserCallHandlers] instead.
+ *
+ * Mirrors the iOS `BambuserCallEvent` enum. Kotlin sealed class so a
+ * future SDK case is a compile-time surfaced addition on `when`
+ * exhaustiveness checks.
  */
 sealed class BambuserCallEvent {
 
-    /**
-     * Embed product click. `externalId` is already unwrapped from its
-     * three possible shapes (string, `{id, feedId}` dict, URL slug).
-     */
-    data class NavigateTo(val externalId: String) : BambuserCallEvent()
+    // MARK: - Lifecycle
 
     /**
-     * Embed close event. The overlay has already been dismissed by the
-     * time this is delivered — purely for observation.
+     * Widget was closed (by the user or by `destroy()`). The overlay
+     * has already been dismissed natively.
      */
     object Close : BambuserCallEvent()
 
-    /**
-     * Embed `goto-checkout` event. `cart` is whatever payload the embed
-     * sent (typically a `{ items: [...] }` shape).
-     */
-    data class Checkout(val cart: Map<String, Any?>?) : BambuserCallEvent()
-
+    /** Call moved between `Idle` / `Connecting` / `Connected` / `Ended`. */
     data class CallStateChanged(val state: CallState) : BambuserCallEvent()
 
     /**
-     * PiP / full-screen flip. `presentation` is meaningful only when
-     * [isPiP] is true.
+     * Overlay flipped between full-screen and PiP. [presentation] is
+     * meaningful only when [isPiP] is true.
      */
     data class PresentationChanged(
         val isPiP: Boolean,
-        val presentation: PipPresentation
+        val presentation: PipPresentation,
     ) : BambuserCallEvent()
+
+    // MARK: - Widget actions
 
     /**
-     * Resolve via `controller.notify(callbackKey, info)` — pass `true`
-     * on success or e.g. `"{ success: false, reason: 'out-of-stock' }"`
-     * on failure.
+     * Shopper tapped the checkout button. [cart] is the raw payload
+     * the embed sent (typically `{ items: [...] }`).
      */
-    data class ShouldAddToCart(
-        val sku: String,
-        val quantity: Int,
-        val callbackKey: String
-    ) : BambuserCallEvent()
-
-    /** Same callback contract as [ShouldAddToCart]. */
-    data class ShouldUpdateCart(
-        val sku: String,
-        val quantity: Int,
-        val callbackKey: String
-    ) : BambuserCallEvent()
+    data class Checkout(val cart: BambuserJSONValue) : BambuserCallEvent()
 
     /**
-     * Any event the framework doesn't model explicitly — a forward-compat
-     * hook and an analytics piggyback point.
+     * Shopper picked "I prefer to chat" instead of the call. The
+     * widget has already closed by the time this fires.
      */
-    data class Other(val name: String, val payload: Any?) : BambuserCallEvent()
+    object ChatRequested : BambuserCallEvent()
+
+    /**
+     * Agent asked to send the shopper to a [url]. The single point
+     * every agent-driven navigation passes through in MANUAL
+     * floatingPlayer mode (checkout too). Route into your navigation
+     * stack.
+     */
+    data class NavigateTo(val url: String) : BambuserCallEvent()
+
+    // MARK: - Queue
+
+    data class QueueOpened(val state: BambuserQueueOpenState) : BambuserCallEvent()
+    data class QueueClosed(val state: BambuserQueueOpenState) : BambuserCallEvent()
+    data class AgentsOnlineChanged(val online: BambuserAgentsOnline) : BambuserCallEvent()
+    data class WaitingTimeChanged(val time: BambuserQueueWaitingTime) : BambuserCallEvent()
+
+    // MARK: - Analytics
+
+    data class TrackingEvent(val event: BambuserTrackingEvent) : BambuserCallEvent()
+
+    // MARK: - Firehose (forward-compat)
+
+    /**
+     * Any event the SDK doesn't model explicitly. Only fires when
+     * [BambuserCallConfiguration.forwardUnknownEmbedEvents] is true.
+     */
+    data class Other(
+        val name: String,
+        val payload: BambuserJSONValue,
+    ) : BambuserCallEvent()
 }

@@ -1,68 +1,74 @@
 package com.bambuser.demo
 
-import android.Manifest
-import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.core.content.ContextCompat
 import com.bambuser.callsshopper.BambuserCallConfiguration
 import com.bambuser.callsshopper.BambuserCallController
+import com.bambuser.callsshopper.BambuserEnvironment
 import com.bambuser.demo.cart.CartStore
 import com.bambuser.demo.root.RootScreen
 
-// MARK: - Bambuser settings — fill these in before running the demo.
+// ---------------------------------------------------------------------------
+// Bambuser settings — fill these in before running the demo.
+// ---------------------------------------------------------------------------
 
 /** Your Bambuser organization id. */
-private const val DEMO_ORG_ID: String = ""
+private const val DEMO_ORG_ID: String = "rakODREyCuvCZj1wvWUa"
 
 /**
- * The Bambuser embed script URL.
+ * Which Bambuser region this demo talks to.
  *
- * - Production:    https://one-to-one.bambuser.com/embed.js
- * - Production EU: https://one-to-one.bambuser.com/eu/embed.js
- * - Labs branch:   https://labs.bambuser.com/one-to-one/gitlab-mr/<id>/embed.js
+ *  - DEBUG builds:   `stageUS` (Bambuser-internal staging — URL is
+ *                    gated by `BuildConfig.DEBUG` inside the SDK
+ *                    and never lands in a release binary).
+ *  - Release builds: swap to `US` (or `EU`).
+ *
+ * Mirrors the iOS demo's environment resolution.
  */
-private const val DEMO_EMBED_URL: String = ""
+private val DEMO_ENVIRONMENT: BambuserEnvironment =
+    if (com.bambuser.demo.BuildConfig.DEBUG) BambuserEnvironment.stageUS
+    else                                     BambuserEnvironment.US
 
-/** True once both fields above are filled in. */
-internal val isBambuserConfigured: Boolean
-    get() = DEMO_ORG_ID.isNotEmpty() && DEMO_EMBED_URL.isNotEmpty()
+/** True once the org id is filled in. */
+internal val isBambuserConfigured: Boolean get() = DEMO_ORG_ID.isNotEmpty()
 
 class MainActivity : ComponentActivity() {
 
     private val cart = CartStore()
+
     private val bambuserCall = BambuserCallController(
         configuration = BambuserCallConfiguration(
             orgId = DEMO_ORG_ID,
-            embedUrl = DEMO_EMBED_URL.ifEmpty { BambuserCallConfiguration.DEFAULT_EMBED_URL },
+            environment = DEMO_ENVIRONMENT,
         )
     )
-    private val bridge = BambuserCallBridge(cart).also { bambuserCall.delegate = it }
 
-    private val permissionRequest = registerForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) { /* nothing — granted permissions take effect on next call attempt */ }
+    private val bridge = BambuserCallBridge(cart, bambuserCall).also {
+        bambuserCall.delegate = it
+        bambuserCall.handlers = it.buildHandlers()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        ensureMediaPermissions()
         setContent {
             MaterialTheme {
                 Surface {
                     var showSetupAlert by remember { mutableStateOf(!isBambuserConfigured) }
-                    LaunchedEffect(Unit) { /* one-shot guard */ }
+
+                    // Force-ask CAMERA + RECORD_AUDIO at launch with a
+                    // rationale + Settings-redirect fallback. No-op once
+                    // permissions are held.
+                    com.bambuser.demo.permissions.EnsureMediaPermissions()
 
                     RootScreen(cart = cart, bambuserCall = bambuserCall)
 
@@ -72,8 +78,9 @@ class MainActivity : ComponentActivity() {
                             title = { Text("Bambuser credentials missing") },
                             text = {
                                 Text(
-                                    "Set DEMO_ORG_ID and DEMO_EMBED_URL at the top of " +
-                                    "MainActivity.kt before starting an expert call."
+                                    "Set DEMO_ORG_ID (and, if needed, DEMO_ENVIRONMENT) " +
+                                    "at the top of MainActivity.kt before starting an " +
+                                    "expert call."
                                 )
                             },
                             confirmButton = {
@@ -86,12 +93,4 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun ensureMediaPermissions() {
-        val needed = listOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO)
-            .filter {
-                ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
-            }
-            .toTypedArray()
-        if (needed.isNotEmpty()) permissionRequest.launch(needed)
-    }
 }
