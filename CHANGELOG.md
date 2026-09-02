@@ -4,6 +4,29 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-09-02
+
+### Added
+- Initial public release of BambuserCallsShopperSDK for Android
+- Core functionality for initiating and managing live shopping calls
+- Shopper authentication and session management
+- Real-time video streaming capabilities
+- Product catalog integration and product selection during calls
+- Call history and persistence
+- Push notification support for incoming calls
+- Comprehensive API documentation and integration guides
+
+### Changed
+- Stabilized and finalized public API surface from v0.3.0
+- Improved performance and reliability of video streaming
+- Enhanced error handling and user-facing error messages
+- Streamlined initialization process for SDK setup
+
+### Fixed
+- Resolved critical issues from v0.1.0 and v0.3.0 releases
+- Fixed session persistence across app restarts
+- Improved stability of call connections
+
 ## [0.3.0] - 2026-09-02
 
 ### Added

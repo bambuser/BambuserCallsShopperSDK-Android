@@ -52,7 +52,11 @@ fun ProductDetailScreen(
     var addedToCart by remember { mutableStateOf(cart.quantity(forSku = product.id) > 0) }
     var showSetupAlert by remember { mutableStateOf(false) }
 
-    // Echo the navigation back to the embed when the user lands on a PDP.
+    // Echo the co-browse hop back to the embed when the shopper lands
+    // on a PDP. Keyed on `product.id` so it re-fires when they
+    // navigate to a different SKU on the same screen — recomposition
+    // alone would skip it. Idempotent while a call is active; a
+    // silent no-op when there's no call in flight.
     LaunchedEffect(product.id) {
         bambuserCall.notifyProductNavigation(externalId = product.id)
     }

@@ -32,6 +32,12 @@ import kotlin.math.min
  *      checkout drive the demo UI.
  *   2. [buildHandlers] — data-source closures the SDK awaits a reply
  *      from (product hydration, catalog search, cart intents).
+ *
+ * Adapt this: replace [CartStore] and [ProductCatalog] with your own
+ * cart/catalog, and rewrite the URL/SKU parsing in [extractSku] /
+ * [resolveSku] to match your product URL scheme. Everything else here
+ * (the delegate wiring, the handler shape, the reply pattern) is the
+ * canonical way to integrate — copy it as-is.
  */
 class BambuserCallBridge(
     private val cart: CartStore,
@@ -107,12 +113,23 @@ class BambuserCallBridge(
             return
         }
         NavigationBridge.productsNav?.navigate("detail/$sku") { launchSingleTop = true }
+        // Echo the co-browse hop back so the agent's carousel highlights
+        // this SKU. The PDP's LaunchedEffect(product.id) also fires this
+        // once it composes — sending both is idempotent and covers the
+        // path where the shopper navigates on their own (no agent
+        // `navigate-to`).
         controller.notifyProductNavigation(externalId = sku)
     }
 
     /**
      * Best-effort SKU extraction — the embed may hand us a full URL,
      * a slug, or the raw external id.
+     *
+     * Adapt this: match your own product-URL scheme. The default treats
+     * the last non-empty path segment as the SKU (works for
+     * `demo.bambuser.shop/product/{sku}/{slug}/` after trailing-slash
+     * trim) and falls back to the raw string. If your URLs encode the
+     * id in a query param or a different segment, decode it here.
      */
     private fun extractSku(url: String): String? {
         if (url.isEmpty()) return null
@@ -188,6 +205,12 @@ class BambuserCallBridge(
             }
         },
 
+        // Adapt this: hook these into your real cart repository /
+        // network calls. Return `cartFailure(reason)` so the widget
+        // surfaces a reason on the agent's row (e.g. "out-of-stock",
+        // "region-restricted"). Both handlers are `suspend`, so awaiting
+        // a network call is fine — the widget keeps the row pending
+        // until the reply lands.
         shouldAddToCart = { intent ->
             if (intent.sku.isEmpty()) cartFailure(reason = "missing-sku")
             else {
@@ -205,6 +228,10 @@ class BambuserCallBridge(
         },
     )
 
+    // Adapt this: the embed hands us the agent's raw ref plus a `kind`
+    // hint. URL refs need the SKU pulled out of a path; scanned barcodes
+    // and product-reference codes come in as bare ids we can use
+    // directly. Rewrite for your own barcode / URL / id conventions.
     private fun resolveSku(ref: BambuserProductRef): String? = when (ref.kind) {
         is BambuserProductRef.Kind.Url -> ref.ref.substringAfterLast('/', "").ifEmpty { null }
         is BambuserProductRef.Kind.ScannedCode,

@@ -4,6 +4,12 @@ package com.bambuser.demo.catalog
  * Flat product model used across the demo. Each SKU is a single-variation
  * product, so we don't need the colour/size tree the SDK can hydrate — `id`
  * is the SKU at every level.
+ *
+ * Adapt this: swap for your own product type. The SDK doesn't care what
+ * shape your product model has — only [DemoProductFactorySpec] does, and
+ * that's demo code you're expected to rewrite for your catalog. Bambuser
+ * only requires that the SKU you emit via `.sku(...)` matches the id the
+ * agent's carousel sends back on `navigate-to` / cart events.
  */
 data class DemoProduct(
     val id: String,

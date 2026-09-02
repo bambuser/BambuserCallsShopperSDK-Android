@@ -121,8 +121,16 @@ enum class DemoTab(val title: String) {
 }
 
 /**
- * Shared sink the [com.bambuser.demo.BambuserCallBridge] writes to so it
- * can push PDPs and switch tabs from outside the composition.
+ * Shared sink the [com.bambuser.demo.BambuserCallBridge] writes to so
+ * it can push PDPs and switch tabs from outside the composition.
+ *
+ * Adapt this: the bridge is a plain Kotlin class that outlives the
+ * compose tree, so it can't call `NavController.navigate` directly —
+ * it has to reach into a value composition owns. A top-level
+ * singleton like this is the smallest thing that works; in a real app
+ * you'd typically inject a shared ViewModel or use a scoped event
+ * bus (`SharedFlow`, `Channel`) so the bridge posts intents and the
+ * composables consume them.
  */
 object NavigationBridge {
     var productsNav: NavHostController? = null

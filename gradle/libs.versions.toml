@@ -25,7 +25,7 @@ androidxTestCore = "1.6.1"
 # producing the GitHub-facing staging copy. Overwritten by
 # Scripts/prepare-release.sh at release time; on develop this value
 # is a placeholder — the app module builds against `project(":...")`.
-callsShopperSdkAndroid = "0.3.0"
+callsShopperSdkAndroid = "1.0.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }

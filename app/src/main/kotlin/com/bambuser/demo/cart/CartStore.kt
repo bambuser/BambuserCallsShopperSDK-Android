@@ -11,6 +11,13 @@ import com.bambuser.demo.catalog.ProductCatalog
  * Observable cart shared across the app. Tracks `[sku → quantity]`. Both
  * the manual "Add to cart" button and the Bambuser cart events mutate
  * this.
+ *
+ * Adapt this: replace with your existing cart repository (persistent
+ * store, sync-to-backend, coupon logic, etc.). The only surface the
+ * SDK integration needs is a way for
+ * [BambuserCallBridge.buildHandlers]'s `shouldAddToCart` /
+ * `shouldUpdateCart` to update it and for `syncCartToWidget` to read
+ * back the current lines.
  */
 class CartStore {
 

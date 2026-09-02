@@ -4,6 +4,14 @@ package com.bambuser.demo.catalog
  * The five demo SKUs the app sells. SKUs match the ids the Bambuser
  * embed will hand back via `navigate-to` and cart events, so a lookup
  * with the bare id resolves directly.
+ *
+ * Adapt this: replace with your product-catalog client — a Room DAO,
+ * a repository backed by your storefront API, an in-memory feed
+ * pushed from server config, etc. Everything downstream
+ * (`BambuserCallBridge.handleNavigate`, `provideProductData`,
+ * `provideSearchData`) reads via `ProductCatalog.all` and
+ * `ProductCatalog.product(forSku)`, so the surface you need to
+ * preserve is small.
  */
 object ProductCatalog {
     val all: List<DemoProduct> = listOf(

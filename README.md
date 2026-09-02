@@ -30,7 +30,7 @@ Consumer Gradle snippet:
 
 ```kotlin
 dependencies {
-    implementation("com.bambuser:calls-shopper-sdk-android:0.3.0")
+    implementation("com.bambuser:calls-shopper-sdk-android:1.0.0")
 }
 ```
 

@@ -21,8 +21,8 @@ fun getGitBranch(): String {
 }
 
 fun getBuildVersion(): String {
-    val versionMajor = 0
-    val versionMinor = 3
+    val versionMajor = 1
+    val versionMinor = 0
     val versionPatch = 0
     return "$versionMajor.$versionMinor.$versionPatch"
 }

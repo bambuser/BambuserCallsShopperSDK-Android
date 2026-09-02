@@ -49,6 +49,11 @@ class MainActivity : ComponentActivity() {
 
     private val cart = CartStore()
 
+    // One controller for the app's lifetime — held by the Activity so
+    // the overlay survives config changes (rotation, dark mode). Adapt
+    // this: in a multi-activity app, hoist ownership into a
+    // ViewModel / DI graph so the same controller instance is reused
+    // wherever the overlay renders.
     private val bambuserCall = BambuserCallController(
         configuration = BambuserCallConfiguration(
             orgId = DEMO_ORG_ID,
@@ -56,6 +61,11 @@ class MainActivity : ComponentActivity() {
         )
     )
 
+    // Bridge implements BambuserCallDelegate + builds the handlers.
+    // Kotlin doesn't have `weak var`, so we hold a strong reference
+    // here in the Activity and assign it to `bambuserCall.delegate`.
+    // Release order matters: null the delegate before dropping the
+    // controller if you ever replace it mid-session.
     private val bridge = BambuserCallBridge(cart, bambuserCall).also {
         bambuserCall.delegate = it
         bambuserCall.handlers = it.buildHandlers()
