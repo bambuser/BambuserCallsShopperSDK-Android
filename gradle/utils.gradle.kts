@@ -24,7 +24,7 @@ fun getBuildVersion(): String {
     val versionMajor = 0
     val versionMinor = 3
     val versionPatch = 0
-    return "0.1.0"
+    return "$versionMajor.$versionMinor.$versionPatch"
 }
 
 fun String.runCommand(

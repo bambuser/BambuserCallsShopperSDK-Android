@@ -47,3 +47,11 @@ calls-shopper-sdk-android = { module = "com.bambuser:calls-shopper-sdk-android",
 ## Heads up
 
 This is an unreleased Bambuser SDK shared for evaluation only — please don't redistribute. Check with your Bambuser contact before using it in production; the public API and embed contract may still change.
+
+## Documentation
+
+Full integration guide, per-feature reference, and troubleshooting live on Bambuser's docs site:
+
+**[bambuser.com/docs/video-consultation/mobile-sdk/android/installation](https://bambuser.com/docs/video-consultation/mobileSDK/android/mobile-sdk/android/installation/)**
+
+Sections you'll find there — installation, architecture, integration, provide product data, provide search data, cart integration, customer events, picture-in-picture, and co-browse.
