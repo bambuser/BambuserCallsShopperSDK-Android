@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.outlined.ShoppingCart
+import androidx.compose.material3.Button
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -25,17 +26,25 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.bambuser.callsshopper.BambuserShopperSDK
 import com.bambuser.demo.catalog.DemoProduct
+import kotlinx.coroutines.launch
+import java.util.UUID
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
-fun CartScreen(cart: CartStore) {
+fun CartScreen(
+    cart: CartStore,
+    bambuserSDK: BambuserShopperSDK,
+) {
+    val scope = rememberCoroutineScope()
     Scaffold(topBar = { TopAppBar(title = { Text("Cart") }) }) { padding ->
         if (cart.orderedLines.isEmpty()) {
             EmptyState(modifier = Modifier.padding(padding))
@@ -69,6 +78,57 @@ fun CartScreen(cart: CartStore) {
                         style = MaterialTheme.typography.titleMedium,
                     )
                 }
+                // Adapt this: fire the shopper-events `purchase` payload
+                // to Bambuser at the moment your app records the sale
+                // (order-confirmation screen, server callback). Here we
+                // do it on the demo "Complete purchase" tap. Bambuser
+                // attributes this event back to the current — or most
+                // recent — Video Consultation call via the persisted
+                // userId + LCTE, so it works even after the shopper
+                // ended the call and kept browsing.
+                Button(
+                    onClick = {
+                        val lines = cart.orderedLines
+                        val subtotal = cart.subtotal
+                        val products = lines.map { (product, qty) ->
+                            mapOf(
+                                "id" to product.id,
+                                "quantity" to qty,
+                                "name" to product.name,
+                                "image" to product.imageUrl,
+                                "price" to product.price,
+                                "currency" to "USD",
+                                "brand" to product.brand,
+                            )
+                        }
+                        val transaction = mapOf(
+                            "id" to UUID.randomUUID().toString(),
+                            "currency" to "USD",
+                            "subtotal" to subtotal,
+                            "total" to subtotal,
+                            "tax" to 0.0,
+                            "shippingCost" to 0.0,
+                        )
+                        scope.launch {
+                            runCatching {
+                                bambuserSDK.track(
+                                    event = "purchase",
+                                    data = mapOf(
+                                        "transaction" to transaction,
+                                        "products" to products,
+                                    ),
+                                )
+                            }
+                        }
+                        cart.clear()
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                ) {
+                    Text("Complete purchase")
+                }
+
                 TextButton(
                     onClick = { cart.clear() },
                     modifier = Modifier

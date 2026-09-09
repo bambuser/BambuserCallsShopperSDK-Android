@@ -26,6 +26,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.bambuser.callsshopper.BambuserCallController
 import com.bambuser.callsshopper.BambuserCallOverlay
+import com.bambuser.callsshopper.BambuserShopperSDK
 import com.bambuser.demo.cart.CartScreen
 import com.bambuser.demo.cart.CartStore
 import com.bambuser.demo.catalog.ProductCatalog
@@ -36,6 +37,7 @@ import com.bambuser.demo.products.ProductsListScreen
 fun RootScreen(
     cart: CartStore,
     bambuserCall: BambuserCallController,
+    bambuserSDK: BambuserShopperSDK,
     productsNavController: NavHostController = rememberNavController(),
 ) {
     var selectedTab by remember { mutableStateOf(DemoTab.Products) }
@@ -91,13 +93,14 @@ fun RootScreen(
                                     product = product,
                                     cart = cart,
                                     bambuserCall = bambuserCall,
+                                    bambuserSDK = bambuserSDK,
                                     onBack = { productsNavController.popBackStack() }
                                 )
                             }
                         }
                     }
 
-                    DemoTab.Cart -> CartScreen(cart)
+                    DemoTab.Cart -> CartScreen(cart = cart, bambuserSDK = bambuserSDK)
                 }
             }
         }

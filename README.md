@@ -30,7 +30,7 @@ Consumer Gradle snippet:
 
 ```kotlin
 dependencies {
-    implementation("com.bambuser:calls-shopper-sdk-android:1.0.0")
+    implementation("com.bambuser:calls-shopper-sdk-android:1.1.0")
 }
 ```
 
@@ -43,10 +43,6 @@ callsShopperSdkAndroid = "X.Y.Z"
 [libraries]
 calls-shopper-sdk-android = { module = "com.bambuser:calls-shopper-sdk-android", version.ref = "callsShopperSdkAndroid" }
 ```
-
-## Heads up
-
-This is an unreleased Bambuser SDK shared for evaluation only — please don't redistribute. Check with your Bambuser contact before using it in production; the public API and embed contract may still change.
 
 ## Documentation
 

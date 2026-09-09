@@ -35,11 +35,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.rememberCoroutineScope
 import coil.compose.AsyncImage
 import com.bambuser.callsshopper.BambuserCallController
+import com.bambuser.callsshopper.BambuserShopperSDK
 import com.bambuser.demo.cart.CartStore
 import com.bambuser.demo.catalog.DemoProduct
 import com.bambuser.demo.isBambuserConfigured
+import kotlinx.coroutines.launch
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
@@ -47,8 +50,10 @@ fun ProductDetailScreen(
     product: DemoProduct,
     cart: CartStore,
     bambuserCall: BambuserCallController,
+    bambuserSDK: BambuserShopperSDK,
     onBack: () -> Unit,
 ) {
+    val scope = rememberCoroutineScope()
     var addedToCart by remember { mutableStateOf(cart.quantity(forSku = product.id) > 0) }
     var showSetupAlert by remember { mutableStateOf(false) }
 
@@ -113,6 +118,31 @@ fun ProductDetailScreen(
                 onClick = {
                     cart.add(sku = product.id, quantity = 1)
                     addedToCart = true
+
+                    // Fire shopper-events `add-to-cart` so Bambuser can
+                    // attribute the cart activity back to the current
+                    // (or most recent) call session. Fire-and-forget —
+                    // failures are logged in the SDK, not fatal here.
+                    scope.launch {
+                        runCatching {
+                            bambuserSDK.track(
+                                event = "add-to-cart",
+                                data = mapOf(
+                                    "products" to listOf(
+                                        mapOf(
+                                            "id" to product.id,
+                                            "quantity" to 1,
+                                            "name" to product.name,
+                                            "image" to product.imageUrl,
+                                            "price" to product.price,
+                                            "currency" to "USD",
+                                            "brand" to product.brand,
+                                        )
+                                    )
+                                )
+                            )
+                        }
+                    }
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {

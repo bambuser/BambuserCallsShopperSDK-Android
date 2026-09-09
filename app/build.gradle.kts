@@ -24,8 +24,6 @@ android {
 
     buildFeatures {
         compose = true
-        // BuildConfig.DEBUG is used by MainActivity to pick
-        // BambuserEnvironment.stageUS vs .US.
         buildConfig = true
     }
 

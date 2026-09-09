@@ -15,6 +15,7 @@ import androidx.compose.runtime.setValue
 import com.bambuser.callsshopper.BambuserCallConfiguration
 import com.bambuser.callsshopper.BambuserCallController
 import com.bambuser.callsshopper.BambuserEnvironment
+import com.bambuser.callsshopper.BambuserShopperSDK
 import com.bambuser.demo.cart.CartStore
 import com.bambuser.demo.root.RootScreen
 
@@ -31,16 +32,10 @@ import com.bambuser.demo.root.RootScreen
 private const val DEMO_ORG_ID: String = ""
 
 /**
- * Which Bambuser region this demo talks to.
- *
- *  - DEBUG builds:   `stageUS` (Bambuser-internal staging — URL is
- *                    gated by `BuildConfig.DEBUG` inside the SDK
- *                    and never lands in a release binary).
- *  - Release builds: swap to `US` (or `EU`).
- *
- * Mirrors the iOS demo's environment resolution.
+ * Which Bambuser region this demo talks to. Change to `EU` if your
+ * workspace is on the EU cluster.
  */
-private val DEMO_ENVIRONMENT: BambuserEnvironment = BambuserEnvironment.stageUS
+private val DEMO_ENVIRONMENT: BambuserEnvironment = BambuserEnvironment.US
 
 /** True once the org id is filled in. */
 internal val isBambuserConfigured: Boolean get() = DEMO_ORG_ID.isNotEmpty()
@@ -60,6 +55,18 @@ class MainActivity : ComponentActivity() {
             environment = DEMO_ENVIRONMENT,
         )
     )
+
+    // App-wide shopper analytics handle. Held for the Activity's
+    // lifetime so `track(...)` calls attribute against the same
+    // shopper user id even when no call is active. In a real app
+    // hoist this to Application / DI (Hilt @Singleton).
+    private val bambuserSDK: BambuserShopperSDK by lazy {
+        BambuserShopperSDK(
+            context = applicationContext,
+            environment = DEMO_ENVIRONMENT,
+            orgId = DEMO_ORG_ID,
+        )
+    }
 
     // Bridge implements BambuserCallDelegate + builds the handlers.
     // Kotlin doesn't have `weak var`, so we hold a strong reference
@@ -83,7 +90,11 @@ class MainActivity : ComponentActivity() {
                     // permissions are held.
                     com.bambuser.demo.permissions.EnsureMediaPermissions()
 
-                    RootScreen(cart = cart, bambuserCall = bambuserCall)
+                    RootScreen(
+                        cart = cart,
+                        bambuserCall = bambuserCall,
+                        bambuserSDK = bambuserSDK,
+                    )
 
                     if (showSetupAlert) {
                         AlertDialog(

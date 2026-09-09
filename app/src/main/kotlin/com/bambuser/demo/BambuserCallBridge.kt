@@ -10,6 +10,7 @@ import com.bambuser.callsshopper.BambuserJSONValue
 import com.bambuser.callsshopper.BambuserProductRef
 import com.bambuser.callsshopper.BambuserReply
 import com.bambuser.callsshopper.CallState
+import com.bambuser.callsshopper.PipPresentation
 import com.bambuser.callsshopper.cartFailure
 import com.bambuser.callsshopper.cartSuccess
 import com.bambuser.callsshopper.jsonInt
@@ -51,7 +52,12 @@ class BambuserCallBridge(
     override fun onEmit(controller: BambuserCallController, event: BambuserCallEvent) {
         when (event) {
             is BambuserCallEvent.NavigateTo -> handleNavigate(event.url)
-            is BambuserCallEvent.Checkout   -> NavigationBridge.onSwitchToCart?.invoke()
+            is BambuserCallEvent.Checkout   -> {
+                // Shrink to a floating mini video player so the
+                // shopper can complete checkout in the app underneath.
+                controller.enterPiP(presentation = PipPresentation.Floating)
+                NavigationBridge.onSwitchToCart?.invoke()
+            }
 
             is BambuserCallEvent.CallStateChanged -> {
                 Log.d(TAG, "event: $event")
