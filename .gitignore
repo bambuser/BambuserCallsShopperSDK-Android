@@ -42,7 +42,3 @@ kotlin-js-store/
 *.keystore
 keystore.properties
 
-# ============================================================
-# Release script output (parity with iOS Scripts/)
-# ============================================================
-# build/ already covered above

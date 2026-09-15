@@ -30,5 +30,19 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!--
+          Second Activity used to demo the
+          `retainWebViewAcrossActivities` opt-in on
+          BambuserCallConfiguration. Start a call from MainActivity,
+          tap "Open Second Activity", and watch the widget WebView
+          reparent into this Activity without dropping the WebRTC
+          session.
+        -->
+        <activity
+            android:name=".SecondActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
+            android:theme="@style/Theme.BambuserCallsShopperDemo" />
     </application>
 </manifest>

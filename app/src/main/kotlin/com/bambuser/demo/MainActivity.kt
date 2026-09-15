@@ -1,10 +1,16 @@
 package com.bambuser.demo
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -12,11 +18,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import com.bambuser.callsshopper.BambuserCallConfiguration
-import com.bambuser.callsshopper.BambuserCallController
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import com.bambuser.callsshopper.BambuserEnvironment
-import com.bambuser.callsshopper.BambuserShopperSDK
-import com.bambuser.demo.cart.CartStore
 import com.bambuser.demo.root.RootScreen
 
 // ---------------------------------------------------------------------------
@@ -29,72 +35,64 @@ import com.bambuser.demo.root.RootScreen
  * (Scripts/validate-release.sh) fails the pipeline if this is
  * non-empty on the develop branch.
  */
-private const val DEMO_ORG_ID: String = ""
+internal const val DEMO_ORG_ID: String = ""
 
 /**
  * Which Bambuser region this demo talks to. Change to `EU` if your
  * workspace is on the EU cluster.
  */
-private val DEMO_ENVIRONMENT: BambuserEnvironment = BambuserEnvironment.US
+internal val DEMO_ENVIRONMENT: BambuserEnvironment = BambuserEnvironment.US
 
 /** True once the org id is filled in. */
 internal val isBambuserConfigured: Boolean get() = DEMO_ORG_ID.isNotEmpty()
 
 class MainActivity : ComponentActivity() {
 
-    private val cart = CartStore()
-
-    // One controller for the app's lifetime — held by the Activity so
-    // the overlay survives config changes (rotation, dark mode). Adapt
-    // this: in a multi-activity app, hoist ownership into a
-    // ViewModel / DI graph so the same controller instance is reused
-    // wherever the overlay renders.
-    private val bambuserCall = BambuserCallController(
-        configuration = BambuserCallConfiguration(
-            orgId = DEMO_ORG_ID,
-            environment = DEMO_ENVIRONMENT,
-        )
-    )
-
-    // App-wide shopper analytics handle. Held for the Activity's
-    // lifetime so `track(...)` calls attribute against the same
-    // shopper user id even when no call is active. In a real app
-    // hoist this to Application / DI (Hilt @Singleton).
-    private val bambuserSDK: BambuserShopperSDK by lazy {
-        BambuserShopperSDK(
-            context = applicationContext,
-            environment = DEMO_ENVIRONMENT,
-            orgId = DEMO_ORG_ID,
-        )
-    }
-
-    // Bridge implements BambuserCallDelegate + builds the handlers.
-    // Kotlin doesn't have `weak var`, so we hold a strong reference
-    // here in the Activity and assign it to `bambuserCall.delegate`.
-    // Release order matters: null the delegate before dropping the
-    // controller if you ever replace it mid-session.
-    private val bridge = BambuserCallBridge(cart, bambuserCall).also {
-        bambuserCall.delegate = it
-        bambuserCall.handlers = it.buildHandlers()
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val app = application as DemoApplication
+        // Touch the bridge so it wires up the controller before the
+        // first show(). Cheap on subsequent Activity creates.
+        app.bridge
+
         setContent {
             MaterialTheme {
                 Surface {
                     var showSetupAlert by remember { mutableStateOf(!isBambuserConfigured) }
+                    val context = LocalContext.current
 
                     // Force-ask CAMERA + RECORD_AUDIO at launch with a
                     // rationale + Settings-redirect fallback. No-op once
                     // permissions are held.
                     com.bambuser.demo.permissions.EnsureMediaPermissions()
 
-                    RootScreen(
-                        cart = cart,
-                        bambuserCall = bambuserCall,
-                        bambuserSDK = bambuserSDK,
-                    )
+                    Box(Modifier.fillMaxSize()) {
+                        RootScreen(
+                            cart = app.cart,
+                            bambuserCall = app.bambuserCall,
+                            bambuserSDK = app.bambuserSDK,
+                        )
+
+                        // "Open Second Activity" demo button, pinned
+                        // top-start so it sits above the products list
+                        // but below the widget overlay (RootScreen
+                        // renders the overlay after this Box's content
+                        // — but that's rendered inside RootScreen's own
+                        // Box, so it lands on top of this button too).
+                        OutlinedButton(
+                            onClick = {
+                                context.startActivity(
+                                    Intent(context, SecondActivity::class.java)
+                                )
+                            },
+                            modifier = Modifier
+                                .align(Alignment.TopStart)
+                                .safeDrawingPadding()
+                                .padding(horizontal = 8.dp),
+                        ) {
+                            Text("→ Second Activity")
+                        }
+                    }
 
                     if (showSetupAlert) {
                         AlertDialog(
@@ -116,5 +114,4 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-
 }

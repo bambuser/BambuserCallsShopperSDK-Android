@@ -76,6 +76,31 @@ class MainActivity : ComponentActivity() {
 
 `BambuserCallOverlay` is empty until you call `bambuserCall.show()`, so it has no cost when no call is active. Place it last in the `Box` so it draws on top.
 
+### Release the controller when its owner dies
+
+If you scope the controller to anything shorter-lived than the process — an Activity like above, a ViewModel, a Compose scope — you should call `release()` when that scope dies so coroutines are cancelled, delegates/handlers (which usually capture your Activity) are cleared, and any active call is closed:
+
+```kotlin
+// Activity-scoped (as above):
+override fun onDestroy() {
+    bambuserCall.release()
+    super.onDestroy()
+}
+
+// ViewModel-scoped:
+override fun onCleared() {
+    bambuserCall.release()
+}
+
+// Compose-scoped:
+val bambuserCall = remember { BambuserCallController(config) }
+DisposableEffect(Unit) {
+    onDispose { bambuserCall.release() }
+}
+```
+
+`release()` ends any active call, unregisters the process observer (if `retainWebViewAcrossActivities` was enabled), and clears `delegate`/`handlers`. It is idempotent, and a released controller is dead — create a new instance for the next session. An Application-scoped singleton controller (required for `retainWebViewAcrossActivities`) never needs releasing.
+
 ## 5. Implement the bridge
 
 ```kotlin

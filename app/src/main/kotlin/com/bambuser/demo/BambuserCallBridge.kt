@@ -64,6 +64,15 @@ class BambuserCallBridge(
                 if (event.state == CallState.Connected) syncCartToWidget(controller)
             }
 
+            is BambuserCallEvent.RenderProcessGone -> {
+                // Chromium renderer was killed (crash or OS memory
+                // reclaim). Controller has already reset itself; a
+                // real host would surface a "call interrupted"
+                // banner and offer to reconnect. For the demo we
+                // just log it.
+                Log.w(TAG, "renderer process gone (didCrash=${event.didCrash}) — call is lost")
+            }
+
             BambuserCallEvent.Close,
             BambuserCallEvent.ChatRequested,
             is BambuserCallEvent.PresentationChanged,

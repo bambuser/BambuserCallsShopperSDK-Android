@@ -13,6 +13,20 @@ the internal CHANGELOG.md and stays on GitLab.
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-09-15
+
+### Added
+
+- **Keep a live call running as the shopper navigates between Activities.** New opt-in `BambuserCallConfiguration.retainWebViewAcrossActivities` flag. When enabled and a single controller is shared across your Activities, the video call, chat and cart state survive cross-Activity navigation. Off by default.
+- Renderer-crash event — `BambuserCallEvent.RenderProcessGone` surfaces the rare case where Android kills the Chromium renderer under memory pressure, so your app can react (e.g. restart the call) instead of failing silently.
+- `BambuserCallController.release()` — call it when the screen or ViewModel that owns the controller is destroyed. Required for controllers that don't live for the whole app process; see the integration guide. Application-scoped singleton controllers never need it.
+
+### Fixed
+
+- Crash on the second call teardown in an app session — the widget cleanup was running on the wrong thread. Fully resolved.
+- Memory leak safety: controller lifecycle observers are only registered when cross-Activity retention is enabled, and a new `release()` method allows non-singleton controllers to drop references and clean up properly.
+
+
 ## [1.1.0] - 2026-09-09
 
 ### Added
