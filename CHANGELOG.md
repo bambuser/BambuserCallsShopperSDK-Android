@@ -13,6 +13,17 @@ the internal CHANGELOG.md and stays on GitLab.
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-10-19
+
+### Changed
+
+- Shopper tracking events now report `source: "clienteling-sdk"` (previously `"call"`).
+
+### Fixed
+
+- Audio and video recover after a phone call, Google Assistant or an alarm interrupts a call. Previously the call stayed connected but the microphone and camera stayed dead.
+- With `retainWebViewAcrossActivities` on, the widget no longer re-opens by itself when the app is closed and launched again. Closing the app now closes the widget, and a widget left open without an active call is closed after 30 seconds in the background. An ongoing call keeps running in the background. After closing, the widget opens again only on `show()`.
+
 ## [1.2.0] - 2026-09-15
 
 ### Added
