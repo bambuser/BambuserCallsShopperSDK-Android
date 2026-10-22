@@ -47,6 +47,7 @@ val config = BambuserCallConfiguration(
     isInspectable = BuildConfig.DEBUG,
     autoExpandOnConnect = true,
     dismissOnCallEnd = true,
+    handleBackPress = true,                    // back → PiP during a call, close when idle
 )
 ```
 

@@ -13,6 +13,11 @@ the internal CHANGELOG.md and stays on GitLab.
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-10-22
+
+### Fixed
+- Pressing the device back button while the widget is open no longer closes the app. During a call the widget collapses to the floating mini-player and the call keeps running; before a call it simply dismisses the widget. Hosts that want to handle back themselves can set `handleBackPress = false` on `BambuserCallConfiguration`.
+
 ## [1.3.0] - 2026-10-19
 
 ### Changed
